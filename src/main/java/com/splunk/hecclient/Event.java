@@ -50,7 +50,6 @@ public abstract class Event {
     static {
         jsonMapper = new ObjectMapper();
         jsonMapper.registerModule(new com.splunk.kafka.connect.JacksonStructModule());
-        // jsonMapper.setDateFormat(StdDateFormat.instance);
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         jsonMapper.setDateFormat(df);
