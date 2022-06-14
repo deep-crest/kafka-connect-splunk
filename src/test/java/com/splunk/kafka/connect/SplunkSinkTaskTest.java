@@ -17,6 +17,7 @@ package com.splunk.kafka.connect;
 
 import com.splunk.hecclient.Event;
 import com.splunk.hecclient.EventBatch;
+import com.splunk.hecclient.JsonEvent;
 import com.splunk.hecclient.RawEventBatch;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -245,6 +246,34 @@ public class SplunkSinkTaskTest {
     public void putWithRawAndAck() {
         putWithSuccess(true, true);
     }
+
+    @Test
+    public void checkExtractedTimestamp() {
+        SplunkSinkTask task = new SplunkSinkTask();
+        Collection<SinkRecord> record = createSinkRecords(1,"{\"id\": \"19\",\"host\":\"host-01\",\"source\":\"bu\",\"fields\":{\"hn\":\"hostname1\",\"CLASS\":\"class1\",\"cust_id\":\"000013934\",\"time\": \"Jun 13 2010 23:11:52.454 UTC\",\"category\":\"IFdata\",\"ifname\":\"LoopBack7\",\"IFdata.Bits received\":\"0\",\"IFdata.Bits sent\":\"0\"}");
+        // SinkRecord record = new SinkRecord(new UnitUtil(0).configProfile.getTopics(), 1, null, null, null, "{\"id\": \"19\",\"host\":\"host-01\",\"source\":\"bu\",\"fields\":{\"hn\":\"hostname1\",\"CLASS\":\"class1\",\"cust_id\":\"000013934\",\"time\": \"Jun 13 2010 23:11:52.454 UTC\",\"category\":\"IFdata\",\"ifname\":\"LoopBack7\",\"IFdata.Bits received\":\"0\",\"IFdata.Bits sent\":\"0\"}", 0, 0L, TimestampType.NO_TIMESTAMP_TYPE);
+        UnitUtil uu = new UnitUtil(0);
+        Map<String, String> config = uu.createTaskConfig();
+        config.put(SplunkSinkConnectorConfig.RAW_CONF, String.valueOf(false));
+        config.put(SplunkSinkConnectorConfig.USE_RECORD_TIMESTAMP_CONF, String.valueOf(false));
+        config.put(SplunkSinkConnectorConfig.REGEX_CONF, "\\\"time\\\":\\s*\\\"(?<abcd>.*?)\"");
+        config.put(SplunkSinkConnectorConfig.TIMESTAMP_FORMAT_CONF, "MMM dd yyyy HH:mm:ss.SSS zzz");
+        task.start(config);
+        task.put(record);
+        Assert.assertEquals(1.276470712454E12+"", task.getTimestamp()+"");
+        task.stop();
+
+
+
+
+
+
+
+
+
+
+    }
+
 
     @Test
     public void putWithRawAndAckWithoutMeta() {
