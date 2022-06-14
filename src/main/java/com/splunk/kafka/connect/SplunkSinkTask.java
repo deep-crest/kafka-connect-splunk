@@ -16,6 +16,9 @@
 package com.splunk.kafka.connect;
 
 import com.splunk.hecclient.*;
+
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.RetriableException;
@@ -25,9 +28,14 @@ import org.apache.kafka.connect.sink.SinkTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.connect.header.Header;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +51,16 @@ public final class SplunkSinkTask extends SinkTask implements PollerCallback {
     private List<SinkRecord> bufferedRecords;
     private long lastFlushed = System.currentTimeMillis();
     private long threadId = Thread.currentThread().getId();
+    private double TimestampforTest; 
+
+    public final void setTimestamp(double t){
+        this.TimestampforTest=t;
+        
+    }
+    public final double getTimestamp(){
+        return TimestampforTest;
+    }
+
 
     private static final String HOSTNAME;
     static {
@@ -477,8 +495,93 @@ public final class SplunkSinkTask extends SinkTask implements PollerCallback {
     private JsonEvent createHECEventNonFormatted(final SinkRecord record) {
         JsonEvent event = new JsonEvent(record.value(), record);
         if (connectorConfig.useRecordTimestamp && record.timestamp() != null) {
+            log.info(" record timestamp is in milliseconds");
             event.setTime(record.timestamp() / 1000.0); // record timestamp is in milliseconds
         }
+
+        log.info("--------------------------------------------------------------");
+        log.info(event.toString());
+        log.info("--------------------------------------------------------------");
+
+        if(connectorConfig.useRecordTimestamp==false)   {
+            String jsonStr = event.getEvent().toString();  
+            String string = jsonStr.replaceAll("\\\"","\"");
+            log.info(string);
+            String extracted_timestamp = "";
+            // String regex="\\\"time\\\"\\: \\\"(?<time>[^\\\"]+)\\\"";
+            final Pattern pattern = Pattern.compile(connectorConfig.regex);
+            final Matcher matcher = pattern.matcher(string);
+            log.info(pattern.toString());
+
+            if (matcher.find()) {
+            System.out.println("Full match: " + matcher.group(1));
+            extracted_timestamp = (matcher.group(1));
+            log.info(extracted_timestamp);
+            }
+
+           
+            log.info(connectorConfig.timestamp_format);
+            log.info(connectorConfig.timestamp_format.trim());
+            log.info("befre" + (connectorConfig.timestamp_format.trim() != "epoch"));
+            log.info("after" + connectorConfig.timestamp_format.trim().equalsIgnoreCase("epoch"));
+
+            double epoch= (double) 0;
+
+            if (!connectorConfig.timestamp_format.trim().equalsIgnoreCase("epoch")){
+                log.info("Inside the date format if ");
+                SimpleDateFormat df = new SimpleDateFormat(connectorConfig.timestamp_format);
+                Date date;
+                try {
+                    date = df.parse(extracted_timestamp);
+                    epoch = (date.getTime());
+                    log.info(epoch + "");
+                    
+                    log.info(record.timestamp().toString());
+                    log.info("above is record timestamp");    
+                } catch (ParseException e) {
+                    // TODO Auto-generated catch block
+                    log.warn("Could not set the time as invalid timestamp format is given");
+                } 
+            }
+            else{
+                try {
+                    log.info("Inside the epoch one ");
+                    epoch = ((Double.parseDouble(extracted_timestamp)));
+                    log.info(record.timestamp().toString());
+                     log.info("above is record timestamp");    
+                }
+                catch (Exception e){
+                    log.warn("Could not set the time as invalid timestamp format is given");
+                }
+
+            }
+
+            if(epoch != (double) 0 ){
+                event.setTime(epoch / 1000.0);
+                log.info(event.getTime().toString());
+                setTimestamp(epoch);
+
+            }
+            
+
+              
+
+            // String str = "Jun 13 2003 23:11:52.454 UTC";
+            // SimpleDateFormat df = new SimpleDateFormat("MMM dd yyyy HH:mm:ss.SSS zzz");
+            // Date date;
+            // try {
+            //     date = df.parse(str);
+            //     long epoch1 = date.getTime();
+            //     System.out.println(epoch1); // 1055545912454
+            //     event.setTime(epoch1/1000);
+            //     log.info(event.getTime().toString());
+
+
+            // } catch (ParseException e) {
+            //     // TODO Auto-generated catch block
+            //     e.printStackTrace();
+            // }
+         }
 
         Map<String, String> metas = connectorConfig.topicMetas.get(record.topic());
         if (metas != null) {
