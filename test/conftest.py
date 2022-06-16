@@ -38,35 +38,39 @@ def setup(request):
 def pytest_configure():
     # Generate message data
     topics = [config["kafka_topic"], config["kafka_topic_2"], config["kafka_header_topic"],
-              "test_splunk_hec_malformed_events"]
+              "test_splunk_hec_malformed_events","extracted_timestamp1"]
 
     create_kafka_topics(config, topics)
     producer = KafkaProducer(bootstrap_servers=config["kafka_broker_url"],
                              value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+    producer1 = KafkaProducer(bootstrap_servers=config["kafka_broker_url"])
 
-    for _ in range(3):
-        msg = {"timestamp": config['timestamp']}
-        producer.send(config["kafka_topic"], msg)
-        producer.send(config["kafka_topic_2"], msg)
+    # for _ in range(3):
+    #     msg = {"timestamp": config['timestamp']}
+    #     producer.send(config["kafka_topic"], msg)
+    #     producer.send(config["kafka_topic_2"], msg)
 
-        headers_to_send = [('header_index', b'kafka'), ('header_source_event', b'kafka_header_source_event'),
-                           ('header_host_event', b'kafkahostevent.com'),
-                           ('header_sourcetype_event', b'kafka_header_sourcetype_event')]
-        producer.send(config["kafka_header_topic"], msg, headers=headers_to_send)
+    #     headers_to_send = [('header_index', b'kafka'), ('header_source_event', b'kafka_header_source_event'),
+    #                        ('header_host_event', b'kafkahostevent.com'),
+    #                        ('header_sourcetype_event', b'kafka_header_sourcetype_event')]
+    #     producer.send(config["kafka_header_topic"], msg, headers=headers_to_send)
 
-        headers_to_send = [('header_index', b'kafka'), ('header_source_raw', b'kafka_header_source_raw'),
-                           ('header_host_raw', b'kafkahostraw.com'),
-                           ('header_sourcetype_raw', b'kafka_header_sourcetype_raw')]
-        producer.send(config["kafka_header_topic"], msg, headers=headers_to_send)
+    #     headers_to_send = [('header_index', b'kafka'), ('header_source_raw', b'kafka_header_source_raw'),
+    #                        ('header_host_raw', b'kafkahostraw.com'),
+    #                        ('header_sourcetype_raw', b'kafka_header_sourcetype_raw')]
+    #     producer.send(config["kafka_header_topic"], msg, headers=headers_to_send)
 
-        headers_to_send = [('splunk.header.index', b'kafka'),
-                           ('splunk.header.host', b'kafkahost.com'),
-                           ('splunk.header.source', b'kafka_custom_header_source'),
-                           ('splunk.header.sourcetype', b'kafka_custom_header_sourcetype')]
-        producer.send(config["kafka_header_topic"], msg, headers=headers_to_send)
+    #     headers_to_send = [('splunk.header.index', b'kafka'),
+    #                        ('splunk.header.host', b'kafkahost.com'),
+    #                        ('splunk.header.source', b'kafka_custom_header_source'),
+    #                        ('splunk.header.sourcetype', b'kafka_custom_header_sourcetype')]
+    #     producer.send(config["kafka_header_topic"], msg, headers=headers_to_send)
+    producer1.send("extracted_timestamp1",b"{\"id\": \"19\",\"host\":\"host-01\",\"source\":\"bu\",\"fields\":{\"hn\":\"hostname1\",\"CLASS\":\"class1\",\"cust_id\":\"000013934\",\"time\": \"Jun 13 2010 23:11:52.454 UTC\",\"category\":\"IFdata\",\"ifname\":\"LoopBack7\",\"IFdata.Bits received\":\"0\",\"IFdata.Bits sent\":\"0\"}")
+    producer1.send("extracted_timestamp1",b"{\"id\": \"19\",\"host\":\"host-01\",\"source\":\"bu\",\"fields\":{\"hn\":\"hostname1\",\"CLASS\":\"class1\",\"cust_id\":\"000013934\",\"time\": \"1555209605000\",\"category\":\"IFdata\",\"ifname\":\"LoopBack7\",\"IFdata.Bits received\":\"0\",\"IFdata.Bits sent\":\"0\"}")
+        
 
-    producer.send("test_splunk_hec_malformed_events", {})
-    producer.send("test_splunk_hec_malformed_events", {"&&": "null", "message": ["$$$$****////", 123, None]})
+    # producer.send("test_splunk_hec_malformed_events", {})
+    # producer.send("test_splunk_hec_malformed_events", {"&&": "null", "message": ["$$$$****////", 123, None]})
     producer.flush()
 
     # Launch all connectors for tests

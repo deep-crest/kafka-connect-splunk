@@ -27,10 +27,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class SplunkSinkConnectorConfig extends AbstractConfig {
+    private static final Logger log = LoggerFactory.getLogger(SplunkSinkConnectorConfig.class);
     // General
     static final String INDEX = "index";
     static final String SOURCE = "source";
@@ -519,11 +526,27 @@ public final class SplunkSinkConnectorConfig extends AbstractConfig {
             if(StringUtils.isEmpty(regex) && regex != null ){
                 throw new ConfigException("For Timestamp Extraction regex value must be provided in the config");
             }
-
-            if( !StringUtils.isEmpty(regex) && Pattern.compile(regex) == null ){
-                throw new PatternSyntaxException(" Invalid Regex", regex, ackPollInterval);
+            
+            if(regex != null){
+                if(Pattern.compile(regex) == null){
+                    throw new ConfigException(" Invalid Regex please enter again");
+                }
+                if(!getNamedGroupCandidates(regex)){
+                    throw new ConfigException(" Invalid Regex please enter again");
+                }
             }
-        
     }
 
+    private static boolean getNamedGroupCandidates(String regex) {
+        Matcher m = Pattern.compile("\\(\\?<([a-zA-Z][a-zA-Z0-9]*)>").matcher(regex);
+
+            while (m.find()) {
+                if(m.group(1).equals("time")) {
+                    return true;   
+                }             
+            }
+            return false;
+        }
 }
+
+

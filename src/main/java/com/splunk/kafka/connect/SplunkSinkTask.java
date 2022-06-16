@@ -17,6 +17,7 @@ package com.splunk.kafka.connect;
 
 import com.splunk.hecclient.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -51,15 +52,6 @@ public final class SplunkSinkTask extends SinkTask implements PollerCallback {
     private List<SinkRecord> bufferedRecords;
     private long lastFlushed = System.currentTimeMillis();
     private long threadId = Thread.currentThread().getId();
-    private double TimestampforTest; 
-
-    public final void setTimestamp(double t){
-        this.TimestampforTest=t;
-        
-    }
-    public final double getTimestamp(){
-        return TimestampforTest;
-    }
 
 
     private static final String HOSTNAME;
@@ -503,7 +495,7 @@ public final class SplunkSinkTask extends SinkTask implements PollerCallback {
         log.info(event.toString());
         log.info("--------------------------------------------------------------");
 
-        if(connectorConfig.useRecordTimestamp==false)   {
+        if(connectorConfig.useRecordTimestamp==false && !StringUtils.isEmpty(connectorConfig.regex) && !connectorConfig.regex.equals(null))   {
             String jsonStr = event.getEvent().toString();  
             String string = jsonStr.replaceAll("\\\"","\"");
             log.info(string);
@@ -518,8 +510,7 @@ public final class SplunkSinkTask extends SinkTask implements PollerCallback {
             extracted_timestamp = (matcher.group(1));
             log.info(extracted_timestamp);
             }
-
-           
+            
             log.info(connectorConfig.timestamp_format);
             log.info(connectorConfig.timestamp_format.trim());
             log.info("befre" + (connectorConfig.timestamp_format.trim() != "epoch"));
@@ -559,12 +550,7 @@ public final class SplunkSinkTask extends SinkTask implements PollerCallback {
             if(epoch != (double) 0 ){
                 event.setTime(epoch / 1000.0);
                 log.info(event.getTime().toString());
-                setTimestamp(epoch);
-
             }
-            
-
-              
 
             // String str = "Jun 13 2003 23:11:52.454 UTC";
             // SimpleDateFormat df = new SimpleDateFormat("MMM dd yyyy HH:mm:ss.SSS zzz");

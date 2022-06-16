@@ -19,6 +19,8 @@ import com.splunk.hecclient.Event;
 import com.splunk.hecclient.EventBatch;
 import com.splunk.hecclient.JsonEvent;
 import com.splunk.hecclient.RawEventBatch;
+
+import org.apache.commons.logging.Log;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.record.TimestampType;
@@ -238,7 +240,6 @@ public class SplunkSinkTaskTest {
         task.start(config);
         task.put(createNullSinkRecord());
         Assert.assertEquals(0, hec.getBatches().size());
-
         task.stop();
     }
 
@@ -256,22 +257,24 @@ public class SplunkSinkTaskTest {
         Map<String, String> config = uu.createTaskConfig();
         config.put(SplunkSinkConnectorConfig.RAW_CONF, String.valueOf(false));
         config.put(SplunkSinkConnectorConfig.USE_RECORD_TIMESTAMP_CONF, String.valueOf(false));
-        config.put(SplunkSinkConnectorConfig.REGEX_CONF, "\\\"time\\\":\\s*\\\"(?<abcd>.*?)\"");
+        config.put(SplunkSinkConnectorConfig.REGEX_CONF, "\\\"time\\\":\\s*\\\"(?<time>.*?)\"");
         config.put(SplunkSinkConnectorConfig.TIMESTAMP_FORMAT_CONF, "MMM dd yyyy HH:mm:ss.SSS zzz");
+        HecMock hec = new HecMock(task);
+        hec.setSendReturnResult(HecMock.success);
+        task.setHec(hec);
         task.start(config);
         task.put(record);
-        Assert.assertEquals(1.276470712454E12+"", task.getTimestamp()+"");
+       
+        List<EventBatch> batches = hec.getBatches();
+        for (Iterator<EventBatch> iter = batches.listIterator(); iter.hasNext();) {
+            EventBatch ch = iter.next();
+            List<Event> ev = ch.getEvents();
+            Iterator<Event> iter1 = ev.listIterator() ;
+            Event ev1 = iter1.next();
+            Assert.assertEquals(1.276470712454E12+"",ev1.getTime()*1000+"");
+            break;       
+        }  
         task.stop();
-
-
-
-
-
-
-
-
-
-
     }
 
 
