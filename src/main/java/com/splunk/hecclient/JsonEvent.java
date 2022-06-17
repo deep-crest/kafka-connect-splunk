@@ -53,7 +53,7 @@ public final class JsonEvent extends Event {
      *
      * @since           1.0
      */
-    public JsonEvent() {
+    JsonEvent() {
     }
 
     /**

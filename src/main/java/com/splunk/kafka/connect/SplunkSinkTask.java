@@ -495,7 +495,7 @@ public final class SplunkSinkTask extends SinkTask implements PollerCallback {
         log.info(event.toString());
         log.info("--------------------------------------------------------------");
 
-        if(connectorConfig.useRecordTimestamp==false && !StringUtils.isEmpty(connectorConfig.regex) && !connectorConfig.regex.equals(null))   {
+        if(connectorConfig.enableTimestampExtraction && StringUtils.isNotEmpty(connectorConfig.regex) )   {
             String jsonStr = event.getEvent().toString();  
             String string = jsonStr.replaceAll("\\\"","\"");
             log.info(string);
@@ -511,16 +511,16 @@ public final class SplunkSinkTask extends SinkTask implements PollerCallback {
             log.info(extracted_timestamp);
             }
             
-            log.info(connectorConfig.timestamp_format);
-            log.info(connectorConfig.timestamp_format.trim());
-            log.info("befre" + (connectorConfig.timestamp_format.trim() != "epoch"));
-            log.info("after" + connectorConfig.timestamp_format.trim().equalsIgnoreCase("epoch"));
+            log.info(connectorConfig.timestampFormat);
+            log.info(connectorConfig.timestampFormat.trim());
+            log.info("befre" + (connectorConfig.timestampFormat.trim() != "epoch"));
+            log.info("after" + connectorConfig.timestampFormat.trim().equalsIgnoreCase("epoch"));
 
             double epoch= (double) 0;
 
-            if (!connectorConfig.timestamp_format.trim().equalsIgnoreCase("epoch")){
+            if (!connectorConfig.timestampFormat.trim().equalsIgnoreCase("epoch")){
                 log.info("Inside the date format if ");
-                SimpleDateFormat df = new SimpleDateFormat(connectorConfig.timestamp_format);
+                SimpleDateFormat df = new SimpleDateFormat(connectorConfig.timestampFormat);
                 Date date;
                 try {
                     date = df.parse(extracted_timestamp);

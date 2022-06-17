@@ -94,6 +94,7 @@ public final class SplunkSinkConnectorConfig extends AbstractConfig {
      static final String KERBEROS_KEYTAB_PATH_CONF = "kerberos.keytab.path";
 
      // Input the Regex String and timestamp format
+     static final String ENABLE_TIMESTAMP_EXTRACTION_CONF = "enable.timestamp.extraction";
      static final String REGEX_CONF = "regex";
      static final String TIMESTAMP_FORMAT_CONF = "timestamp.format";
 
@@ -198,7 +199,7 @@ public final class SplunkSinkConnectorConfig extends AbstractConfig {
     static final String KERBEROS_USER_PRINCIPAL_DOC = "Kerberos user principal";
     static final String KERBEROS_KEYTAB_LOCATION_DOC = "Kerberos keytab path";
 
-
+    static final String ENABLE_TIMESTAMP_EXTRACTION_DOC = "set to true if you want to extract the timestamp";
     static final String REGEX_DOC = " Regex";
     static final String TIMESTAMP_FORMAT_DOC = "Timestamp format";
 
@@ -251,8 +252,9 @@ public final class SplunkSinkConnectorConfig extends AbstractConfig {
     final String kerberosUserPrincipal;
     final String kerberosKeytabPath;
 
+    final boolean enableTimestampExtraction;
     final String regex;
-    final String timestamp_format;
+    final String timestampFormat;
 
 
     SplunkSinkConnectorConfig(Map<String, String> taskConfig) {
@@ -303,8 +305,9 @@ public final class SplunkSinkConnectorConfig extends AbstractConfig {
         kerberosUserPrincipal = getString(KERBEROS_USER_PRINCIPAL_CONF);
         kerberosKeytabPath = getString(KERBEROS_KEYTAB_PATH_CONF);
         enableCompression = getBoolean(ENABLE_COMPRESSSION_CONF);
+        enableTimestampExtraction = getBoolean(ENABLE_TIMESTAMP_EXTRACTION_CONF);
         regex = getString(REGEX_CONF);
-        timestamp_format = getString(TIMESTAMP_FORMAT_CONF);
+        timestampFormat = getString(TIMESTAMP_FORMAT_CONF);
         validateRegexForTimestamp(regex);
     }
 
@@ -348,7 +351,8 @@ public final class SplunkSinkConnectorConfig extends AbstractConfig {
                 .define(ENABLE_COMPRESSSION_CONF, ConfigDef.Type.BOOLEAN, false, ConfigDef.Importance.MEDIUM, ENABLE_COMPRESSSION_DOC)
                 .define(KERBEROS_USER_PRINCIPAL_CONF, ConfigDef.Type.STRING, "", ConfigDef.Importance.MEDIUM, KERBEROS_USER_PRINCIPAL_DOC)
                 .define(KERBEROS_KEYTAB_PATH_CONF, ConfigDef.Type.STRING, "", ConfigDef.Importance.MEDIUM, KERBEROS_KEYTAB_LOCATION_DOC)
-                .define(REGEX_CONF, ConfigDef.Type.STRING,  null , ConfigDef.Importance.MEDIUM, REGEX_CONF)
+                .define(ENABLE_TIMESTAMP_EXTRACTION_CONF, ConfigDef.Type.BOOLEAN,  false , ConfigDef.Importance.MEDIUM, ENABLE_TIMESTAMP_EXTRACTION_CONF)
+                .define(REGEX_CONF, ConfigDef.Type.STRING,  "" , ConfigDef.Importance.MEDIUM, REGEX_CONF)
                 .define(TIMESTAMP_FORMAT_CONF, ConfigDef.Type.STRING, "", ConfigDef.Importance.MEDIUM, TIMESTAMP_FORMAT_DOC);         
     }
 
@@ -523,23 +527,22 @@ public final class SplunkSinkConnectorConfig extends AbstractConfig {
     }
 
     private void validateRegexForTimestamp(String regex){
-            if(StringUtils.isEmpty(regex) && regex != null ){
-                throw new ConfigException("For Timestamp Extraction regex value must be provided in the config");
+            if(enableTimestampExtraction &&  regex == null ){
+                throw new ConfigException("For Timestamp Extraction regex value should not be null");
             }
             
-            if(regex != null){
+            if(StringUtils.isNotBlank(regex) && enableTimestampExtraction){
                 if(Pattern.compile(regex) == null){
                     throw new ConfigException(" Invalid Regex please enter again");
                 }
                 if(!getNamedGroupCandidates(regex)){
-                    throw new ConfigException(" Invalid Regex please enter again");
+                    throw new ConfigException("Invalid Named Group");
                 }
             }
     }
 
     private static boolean getNamedGroupCandidates(String regex) {
         Matcher m = Pattern.compile("\\(\\?<([a-zA-Z][a-zA-Z0-9]*)>").matcher(regex);
-
             while (m.find()) {
                 if(m.group(1).equals("time")) {
                     return true;   

@@ -33,8 +33,8 @@ def generate_connector_content(input_disc=None):
             "splunk_header_host": None,
             "splunk_hec_json_event_formatted": None,
             "splunk_sourcetypes": "kafka",
-            "splunk_hec_use_record_timestamp" : "true",
-            "regex" : None,
+            "enable.timestamp.extraction" : "false",
+            "regex" : "",
             "timestamp_format" : "",
         }
 
