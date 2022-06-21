@@ -45,7 +45,7 @@
 				"splunk.hec.json.event.formatted": "{{splunk_hec_json_event_formatted}}",
 			{% endif %}
 			"splunk.sourcetypes": "{{splunk_sourcetypes}}",
-			"enable.timestamp.extraction": "{{splunk_timestamp_extraction}}",
+			"enable.timestamp.extraction": "{{enable_timestamp_extraction}}",
 			"regex": "{{regex}}",
 			"timestamp.format": "{{timestamp_format}}"
 		}
