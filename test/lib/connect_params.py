@@ -17,13 +17,13 @@ with open(_config_path, 'w') as yaml_file:
     
 connect_params = [
     {"name": "test_extracted_timestamp_dateformat",
-     "topics": "extracted_timestamp1",
+     "topics": "date_format",
      "splunk_hec_raw": False,
      "enable_timestamp_extraction" : "true",
      "regex": r"\\\"time\\\":\\s*\\\"(?<time>.*?)\"",
      "timestamp_format": "MMM dd yyyy HH:mm:ss.SSS zzz"},
     {"name": "test_extracted_timestamp_epochformat",
-     "topics": "extracted_timestamp1",
+     "topics": "epoch_format",
      "splunk_hec_raw": False,
      "enable_timestamp_extraction" : "true",
      "regex": r"\\\"time\\\":\\s*\\\"(?<time>.*?)\"",

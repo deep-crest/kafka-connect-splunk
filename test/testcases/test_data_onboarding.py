@@ -31,7 +31,7 @@ class TestDataOnboarding:
 
 
     @pytest.mark.parametrize("test_scenario, test_input, expected", [
-        ("date_format ", "latest=1365209605.000", " 2010-06-13T23:11:52.454+00:00"),
+        ("date_format ", "latest=1365209605.000", "2010-06-13T23:11:52.454+00:00"),
     ])
     def test_extracted_Timestamp_data_onboarding_date_format(self, setup, test_scenario, test_input, expected):
         logger.info("testing {0} input={1} expected={2} event(s)".format(test_scenario, test_input, expected))
@@ -45,6 +45,7 @@ class TestDataOnboarding:
                                           password=setup["splunk_password"])
         logger.info("Splunk received %s events in the last hour", len(events))
         assert events[0]["_time"] == expected
+        assert len(events) == 1
 
 
     @pytest.mark.parametrize("test_scenario, test_input, expected", [
@@ -62,6 +63,7 @@ class TestDataOnboarding:
                                           password=setup["splunk_password"])
         logger.info("Splunk received %s events in the last hour", len(events))
         assert events[0]["_time"] == expected
+        assert len(events) == 1
 
         
 

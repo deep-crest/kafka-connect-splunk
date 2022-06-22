@@ -38,7 +38,7 @@ def setup(request):
 def pytest_configure():
     # Generate message data
     topics = [config["kafka_topic"], config["kafka_topic_2"], config["kafka_header_topic"],
-              "test_splunk_hec_malformed_events","extracted_timestamp1"]
+              "test_splunk_hec_malformed_events","epoch_format","date_format"]
 
     create_kafka_topics(config, topics)
     producer = KafkaProducer(bootstrap_servers=config["kafka_broker_url"],
@@ -65,13 +65,14 @@ def pytest_configure():
     #                        ('splunk.header.source', b'kafka_custom_header_source'),
     #                        ('splunk.header.sourcetype', b'kafka_custom_header_sourcetype')]
     #     producer.send(config["kafka_header_topic"], msg, headers=headers_to_send)
-    producer1.send("extracted_timestamp1",b"{\"id\": \"19\",\"host\":\"host-01\",\"source\":\"bu\",\"fields\":{\"hn\":\"hostname1\",\"CLASS\":\"class1\",\"cust_id\":\"000013934\",\"time\": \"Jun 13 2010 23:11:52.454 UTC\",\"category\":\"IFdata\",\"ifname\":\"LoopBack7\",\"IFdata.Bits received\":\"0\",\"IFdata.Bits sent\":\"0\"}")
-    producer1.send("extracted_timestamp1",b"{\"id\": \"19\",\"host\":\"host-01\",\"source\":\"bu\",\"fields\":{\"hn\":\"hostname1\",\"CLASS\":\"class1\",\"cust_id\":\"000013934\",\"time\": \"1555209605000\",\"category\":\"IFdata\",\"ifname\":\"LoopBack7\",\"IFdata.Bits received\":\"0\",\"IFdata.Bits sent\":\"0\"}")
+    producer1.send("date_format",b"{\"id\": \"19\",\"host\":\"host-01\",\"source\":\"bu\",\"fields\":{\"hn\":\"hostname1\",\"CLASS\":\"class1\",\"cust_id\":\"000013934\",\"time\": \"Jun 13 2010 23:11:52.454 UTC\",\"category\":\"IFdata\",\"ifname\":\"LoopBack7\",\"IFdata.Bits received\":\"0\",\"IFdata.Bits sent\":\"0\"}")
+    producer1.send("epoch_format",b"{\"id\": \"19\",\"host\":\"host-01\",\"source\":\"bu\",\"fields\":{\"hn\":\"hostname1\",\"CLASS\":\"class1\",\"cust_id\":\"000013934\",\"time\": \"1555209605000\",\"category\":\"IFdata\",\"ifname\":\"LoopBack7\",\"IFdata.Bits received\":\"0\",\"IFdata.Bits sent\":\"0\"}")
         
 
     # producer.send("test_splunk_hec_malformed_events", {})
     # producer.send("test_splunk_hec_malformed_events", {"&&": "null", "message": ["$$$$****////", 123, None]})
-    producer.flush()
+    # producer.flush()
+    producer1.flush()
 
     # Launch all connectors for tests
     for param in connect_params:
@@ -79,7 +80,7 @@ def pytest_configure():
         create_kafka_connector(config, connector_content)
 
     # wait for data to be ingested to Splunk
-    time.sleep(60)
+    time.sleep(30)
 
 
 def pytest_unconfigure():
